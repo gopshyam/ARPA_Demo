@@ -11,49 +11,57 @@ import threading
 NORMAL_FILE = "../Data/cs01_no_ls.csv"
 RAS_FILE = "../Data/cs01_with_dufls_[VR].csv"
 
+NORMAL_IMAGE = "../Data/normal_state.png"
+ALERT_IMAGE = "../Data/alert_state.png"
+
+WSU_LOGO = "../Data/wsu-central-social-badge.png"
+
 PLOT_SIZE = 500
-TIMEOUT = 0.005
+TIMEOUT = 5
 
 RANGE_MIN = 45
 RANGE_MAX = 65
 
-class Slider(QtGui.QWidget):
-    def __init__(self, minimum, maximum, parent=None):
-        super(Slider, self).__init__(parent=parent)
-        self.verticalLayout = QtGui.QVBoxLayout(self)
-        self.label = QtGui.QLabel(self)
-        self.verticalLayout.addWidget(self.label)
-        self.horizontalLayout = QtGui.QHBoxLayout()
-        spacerItem = QtGui.QSpacerItem(0, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem)
-        self.slider = QtGui.QSlider(self)
-        self.slider.setOrientation(QtCore.Qt.Vertical)
-        self.horizontalLayout.addWidget(self.slider)
-        spacerItem1 = QtGui.QSpacerItem(0, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem1)
-        self.verticalLayout.addLayout(self.horizontalLayout)
-        self.resize(self.sizeHint())
+EMERGENCY_LIMIT = 58
 
-        self.minimum = minimum
-        self.maximum = maximum
-        self.slider.valueChanged.connect(self.setLabelValue)
-        self.x = None
-        self.setLabelValue(self.slider.value())
-
-    def setLabelValue(self, value):
-        self.x = self.minimum + (float(value) / (self.slider.maximum() - self.slider.minimum())) * (
-        self.maximum - self.minimum)
-        self.label.setText("{0:.4g}".format(self.x))
-
-class Widget(QtGui.QWidget):
+class SpeedButton(QtGui.QWidget):
     def __init__(self, parent=None):
-        super(Widget, self).__init__(parent=parent)
+        super(SpeedButton, self).__init__(parent=parent)
+        self.verticalLayout = QtGui.QVBoxLayout(self)
+        self.speed = 1
+        self.label = QtGui.QLabel(self)
+        self.label.setText("Speed")
+        self.verticalLayout.addWidget(self.label)
 
-        self.interval = 1
+        self.sb1 = QtGui.QRadioButton("x1")
+        self.sb1.toggled.connect(lambda: self.setSpeed(1))
+        self.sb2 = QtGui.QRadioButton("x0.5")
+        self.sb2.toggled.connect(lambda: self.setSpeed(0.5))
+        self.sb3 = QtGui.QRadioButton("x0.25")
+        self.sb3.toggled.connect(lambda: self.setSpeed(0.25))
+        self.sb4 = QtGui.QRadioButton("x0.10")
+        self.sb4.toggled.connect(lambda: self.setSpeed(0.1))
+
+        self.verticalLayout.addWidget(self.sb1)
+        self.verticalLayout.addWidget(self.sb2)
+        self.verticalLayout.addWidget(self.sb3)
+        self.verticalLayout.addWidget(self.sb4)
+
+    def setSpeed(self, speed):
+        self.speed = speed
+
+    def getSpeed(self):
+        return self.speed
+        
+class GraphWidget(QtGui.QWidget):
+    def __init__(self, parent=None):
+        super(GraphWidget, self).__init__(parent=parent)
+
+        self.speed = 1
         self.index = 0
 
         self.horizontalLayout = QtGui.QHBoxLayout(self)
-        self.w1 = Slider(0, 10)
+        self.w1 = SpeedButton()
 
 #        self.w2 = Slider(-1, 1)
 #        self.horizontalLayout.addWidget(self.w2)
@@ -68,9 +76,9 @@ class Widget(QtGui.QWidget):
         self.horizontalLayout.addWidget(self.win)
         #self.update()
 
-        self.w1.slider.valueChanged.connect(self.setInterval)
+        #self.w1.slider.valueChanged.connect(self.setInterval)
 
-        self.normalReadings, self.rasReadings, self.normalTimes, self.rasTimes = self.parse_files()
+        self.normalReadings, self.rasReadings = self.parse_files()
 
         #Print the difference between times and see if there's any hope, or else take the average of times
 
@@ -87,30 +95,33 @@ class Widget(QtGui.QWidget):
 
         self.rasPlot = self.win.addPlot(title = "With RAS")
         self.rasCurve = self.rasPlot.plot(pen = pg.mkPen('b', width = 3))
-        self.rasPlot.setYRange(RANGE_MIN, RANGE_MAX, padding = 0.1, update = False)
+        self.rasPlot.setYRange(58, 61, padding = 0.1, update = False)
 
         self.horizontalLayout.addWidget(self.w1)
 
-        self.button = QtGui.QPushButton('Start', self)
-        self.button.clicked.connect(self.startGraph)
-        self.horizontalLayout.addWidget(self.button)
+        self.systemStateLabel = QtGui.QLabel(self)
+        self.normalPixmap = QtGui.QPixmap(NORMAL_IMAGE)
+        self.alertPixmap = QtGui.QPixmap(ALERT_IMAGE)
+        self.systemStateLabel.setPixmap(self.normalPixmap)
+        self.horizontalLayout.addWidget(self.systemStateLabel)
 
-        self.updateThread = threading.Thread(target = self.update)
-        
-
-    def startGraph(self):
-        print "STARTING ANIMATION"
-        self.updateThread.start()
+        self.timer = pg.QtCore.QTimer()
+        self.timer.timeout.connect(self.update)
+        self.timer.start(TIMEOUT)
 
 
     def update(self):
-        while True:
-            if self.index + PLOT_SIZE >= len(self.normalReadings):
-                self.index = 0
+        if self.index + PLOT_SIZE < len(self.normalReadings):
             self.normalCurve.setData(self.normalReadings[self.index : self.index+PLOT_SIZE])
             self.rasCurve.setData(self.rasReadings[self.index : self.index+PLOT_SIZE])
             self.index += 1
-            time.sleep(TIMEOUT * self.interval)
+            if (self.speed != self.w1.getSpeed()):
+                self.speed = self.w1.getSpeed()
+                self.timer.setInterval(int(TIMEOUT/self.speed))
+            if self.normalReadings[self.index] < EMERGENCY_LIMIT:
+                self.systemStateLabel.setPixmap(self.alertPixmap)
+        else:
+            self.index = 0
         
 
     def setInterval(self):
@@ -147,14 +158,31 @@ class Widget(QtGui.QWidget):
         print len(normalReadings)
         print len(rasReadings)
 
-        return normalReadings, rasReadings, normalTimes, rasTimes
+        return normalReadings[-5000:], rasReadings[-5000:]
+
+
+class DemoWindow(QtGui.QWidget):
+    def __init__(self, parent = None):
+        super(DemoWindow, self).__init__(parent = parent)
+
+        self.graph = GraphWidget(self)
+
+        
+        self.verticalLayout = QtGui.QVBoxLayout(self)
+        self.verticalLayout.addWidget(self.graph)
+
+
+        self.logoPixmap = QtGui.QPixmap(WSU_LOGO)
+        self.logoLabel = QtGui.QLabel(self)
+        self.logoLabel.setPixmap(self.logoPixmap.scaledToHeight(200))
+        self.verticalLayout.addWidget(self.logoLabel)
 
 
 
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
-    w = Widget()
+    w = DemoWindow()
     w.show()
     sys.exit(app.exec_())
 
