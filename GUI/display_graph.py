@@ -22,6 +22,7 @@ GA1_RAS = "Arpa_demo_nodes/Slide4.PNG"
 SA1_RAS = "Arpa_demo_nodes/Slide5.PNG"
 SA2_RAS = "Arpa_demo_nodes/Slide6.PNG"
 
+LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
 
 PLOT_SIZE = 500
 TIMEOUT = 5
@@ -143,6 +144,12 @@ class GraphWidget(QtGui.QWidget):
         self.systemStateLayout = SystemStateWidget()
         
         self.horizontalLayout.addWidget(self.systemStateLayout)
+
+        self.lineDiagramLabel = QtGui.QLabel(self)
+        self.lineDiagramPixmap = QtGui.QPixmap(LINE_DIAGRAM)
+        self.lineDiagramLabel.setPixmap(self.lineDiagramPixmap)
+
+        self.horizontalLayout.addWidget(self.lineDiagramLabel)
 
         self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.update)
