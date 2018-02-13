@@ -27,7 +27,7 @@ LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
 PLOT_SIZE = 500
 TIMEOUT = 5
 
-RANGE_MIN = 45
+RANGE_MIN = 48
 RANGE_MAX = 65
 
 EMERGENCY_LIMIT = 59.78
@@ -36,7 +36,7 @@ class SpeedButton(QtGui.QWidget):
     def __init__(self, parent=None):
         super(SpeedButton, self).__init__(parent=parent)
         self.verticalLayout = QtGui.QVBoxLayout(self)
-        self.speed = 1
+        self.speed = 0.25
         self.label = QtGui.QLabel(self)
         self.label.setText("Speed")
         self.verticalLayout.addWidget(self.label)
@@ -47,6 +47,7 @@ class SpeedButton(QtGui.QWidget):
         self.sb2.toggled.connect(lambda: self.setSpeed(0.5))
         self.sb3 = QtGui.QRadioButton("x0.25")
         self.sb3.toggled.connect(lambda: self.setSpeed(0.25))
+        self.sb3.setChecked(True)
         self.sb4 = QtGui.QRadioButton("x0.10")
         self.sb4.toggled.connect(lambda: self.setSpeed(0.1))
 
@@ -115,7 +116,6 @@ class GraphWidget(QtGui.QWidget):
 #        self.horizontalLayout.addWidget(self.w4)
 
         self.win = pg.GraphicsWindow(title="UFLS Demo")
-        self.horizontalLayout.addWidget(self.win)
         #self.update()
 
         #self.w1.slider.valueChanged.connect(self.setInterval)
@@ -131,13 +131,16 @@ class GraphWidget(QtGui.QWidget):
 
         pg.setConfigOptions(antialias = True)
 
+        self.horizontalLayout.addWidget(self.win)
+
+
         self.normalPlot = self.win.addPlot(title = "Without RAS")
         self.normalCurve = self.normalPlot.plot(pen = pg.mkPen('r', width = 3))
-        self.normalPlot.setYRange(RANGE_MIN, RANGE_MAX, padding = 0.1, update = False)
+        self.normalPlot.setYRange(49, 60, padding = 0.1, update = False)
 
         self.rasPlot = self.win.addPlot(title = "With RAS")
         self.rasCurve = self.rasPlot.plot(pen = pg.mkPen('b', width = 3))
-        self.rasPlot.setYRange(58, 61, padding = 0.1, update = False)
+        self.rasPlot.setYRange(58.1, 60, padding = 0.1, update = False)
 
         self.horizontalLayout.addWidget(self.w1)
 
@@ -205,7 +208,7 @@ class GraphWidget(QtGui.QWidget):
         print len(normalReadings)
         print len(rasReadings)
 
-        return normalReadings[-5000:], rasReadings[-5000:]
+        return normalReadings[-5000:], rasReadings[-8000:]
 
 
 class DemoWindow(QtGui.QWidget):
