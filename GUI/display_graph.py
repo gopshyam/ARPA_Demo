@@ -27,19 +27,90 @@ LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
 PLOT_SIZE = 500
 TIMEOUT = 5
 
-RANGE_MIN = 48
-RANGE_MAX = 65
+INITIAL_VALUE = 60.0
 
 EMERGENCY_LIMIT = 59.78
 
+def parse_files():
+
+        normalFile = open(NORMAL_FILE, 'r') 
+        rasFile = open(RAS_FILE, 'r')
+
+        normalReader = csv.reader(normalFile)
+        rasReader = csv.reader(rasFile)
+
+        normalReadings = list()
+        rasReadings = list()
+
+        normalTimes = list()
+        rasTimes = list()
+
+
+        for row in normalReader:
+            normalReadings.append(float(row[1].strip()))
+            #Get all the dates and times and then display them
+            #normalTimes.append(datetime.strptime(row[0].strip(), '%m/%d/%Y %X.%f'))
+        
+        for row in rasReader:
+            rasReadings.append(float(row[1].strip()))
+            #rasTimes.append(datetime.strptime(row[0].strip(), '%m/%d/%Y %X.%f'))
+
+
+        normalFile.close()
+        rasFile.close()
+
+
+        return normalReadings[750:], rasReadings[-7700:]
+
+
+
+class DataGenerator():
+    def __init__(self):
+        self.normalReadings, self.rasReadings = parse_files()
+        self.index = 0
+        self.isContingency = False
+
+    def start(self):
+        self.isContingency = True
+
+    def stop(self):
+        self.isContingency = False
+        self.index = 0
+
+    def get(self):
+        normalReading = INITIAL_VALUE
+        rasReading = INITIAL_VALUE
+
+        if (self.isContingency):
+            normalReading = self.normalReadings[self.index]
+            rasReading = self.rasReadings[self.index]
+
+            self.index += 1
+
+            if self.index >= len(self.normalReadings):
+                self.index = 0
+
+        return normalReading, rasReading
+
+
+
 class SpeedButton(QtGui.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, dataGenerator, parent=None):
         super(SpeedButton, self).__init__(parent=parent)
+
+
         self.verticalLayout = QtGui.QVBoxLayout(self)
         self.speed = 0.25
         self.label = QtGui.QLabel(self)
         self.label.setText("Speed")
-        self.verticalLayout.addWidget(self.label)
+
+        self.startButton = QtGui.QPushButton('Start', self)
+        self.startButton.clicked.connect(dataGenerator.start)
+
+        self.stopButton = QtGui.QPushButton('Stop', self)
+        self.stopButton.clicked.connect(dataGenerator.stop)
+
+        self.fullPlotButton = QtGui.QPushButton("View Full Plot", self)
 
         self.sb1 = QtGui.QRadioButton("x1")
         self.sb1.toggled.connect(lambda: self.setSpeed(1))
@@ -51,6 +122,10 @@ class SpeedButton(QtGui.QWidget):
         self.sb4 = QtGui.QRadioButton("x0.10")
         self.sb4.toggled.connect(lambda: self.setSpeed(0.1))
 
+        self.verticalLayout.addWidget(self.startButton)
+        self.verticalLayout.addWidget(self.stopButton)
+        self.verticalLayout.addWidget(self.fullPlotButton)
+        self.verticalLayout.addWidget(self.label)
         self.verticalLayout.addWidget(self.sb1)
         self.verticalLayout.addWidget(self.sb2)
         self.verticalLayout.addWidget(self.sb3)
@@ -104,7 +179,10 @@ class GraphWidget(QtGui.QWidget):
         self.index = 0
 
         self.horizontalLayout = QtGui.QHBoxLayout(self)
-        self.w1 = SpeedButton()
+
+        self.dataGenerator = DataGenerator()
+        self.w1 = SpeedButton(self.dataGenerator)
+        self.w1.fullPlotButton.clicked.connect(self.showFullPlot)
 
 #        self.w2 = Slider(-1, 1)
 #        self.horizontalLayout.addWidget(self.w2)
@@ -120,7 +198,9 @@ class GraphWidget(QtGui.QWidget):
 
         #self.w1.slider.valueChanged.connect(self.setInterval)
 
-        self.normalReadings, self.rasReadings = self.parse_files()
+        self.normalReadings = [60.0 for _ in range(PLOT_SIZE)]
+        self.rasReadings = [60.0 for _ in range(PLOT_SIZE)]
+
 
         #Print the difference between times and see if there's any hope, or else take the average of times
 
@@ -137,10 +217,15 @@ class GraphWidget(QtGui.QWidget):
         self.normalPlot = self.win.addPlot(title = "Without RAS")
         self.normalCurve = self.normalPlot.plot(pen = pg.mkPen('r', width = 3))
         self.normalPlot.setYRange(49, 60, padding = 0.1, update = False)
+        self.normalPlot.setLabel("left", "Frequency", units = "Hz")
+        self.normalPlot.setLabel("bottom", "Time", units = "s")
 
         self.rasPlot = self.win.addPlot(title = "With RAS")
         self.rasCurve = self.rasPlot.plot(pen = pg.mkPen('b', width = 3))
         self.rasPlot.setYRange(58.1, 60, padding = 0.1, update = False)
+        self.rasPlot.setLabel("left", "Frequency", units = "Hz")
+        self.rasPlot.setLabel("bottom", "Time", units = "s")
+
 
         self.horizontalLayout.addWidget(self.w1)
 
@@ -160,57 +245,28 @@ class GraphWidget(QtGui.QWidget):
 
 
     def update(self):
-        if self.index + PLOT_SIZE < len(self.normalReadings):
-            self.normalCurve.setData(self.normalReadings[self.index : self.index+PLOT_SIZE])
-            self.rasCurve.setData(self.rasReadings[self.index : self.index+PLOT_SIZE])
-            self.index += 1
-            if (self.speed != self.w1.getSpeed()):
-                self.speed = self.w1.getSpeed()
-                self.timer.setInterval(int(TIMEOUT/self.speed))
-            if self.normalReadings[self.index] < EMERGENCY_LIMIT:
-                self.systemStateLayout.alert()
-        else:
-            self.systemStateLayout.reset()
-            self.index = 0
+        normalReading, rasReading = self.dataGenerator.get()
+        self.normalReadings = self.normalReadings[1:] + [normalReading]
+        self.rasReadings = self.rasReadings[1:] + [rasReading]
+        self.normalCurve.setData(self.normalReadings)
+        self.rasCurve.setData(self.rasReadings)
+
+        if (self.speed != self.w1.getSpeed()):
+            self.speed = self.w1.getSpeed()
+            self.timer.setInterval(int(TIMEOUT/self.speed))
+        if self.normalReadings[self.index] < EMERGENCY_LIMIT:
+            self.systemStateLayout.alert()
         
+    def showFullPlot(self):
+        self.timer.setInterval(1000)
+        normalReadings, rasReadings = parse_files()
+        self.normalCurve.setData(normalReadings)
+        self.rasCurve.setData(rasReadings[:len(normalReadings)])
 
     def setInterval(self):
         self.interval = self.w1.x
 
-    def parse_files(self):
-
-        normalFile = open(NORMAL_FILE, 'r') 
-        rasFile = open(RAS_FILE, 'r')
-
-        normalReader = csv.reader(normalFile)
-        rasReader = csv.reader(rasFile)
-
-        normalReadings = list()
-        rasReadings = list()
-
-        normalTimes = list()
-        rasTimes = list()
-
-        for row in normalReader:
-            normalReadings.append(float(row[1].strip()))
-        
-            #Get all the dates and times and then display them
-            #normalTimes.append(datetime.strptime(row[0].strip(), '%m/%d/%Y %X.%f'))
-        
-        for row in rasReader:
-            rasReadings.append(float(row[1].strip()))
-            #rasTimes.append(datetime.strptime(row[0].strip(), '%m/%d/%Y %X.%f'))
-
-
-        normalFile.close()
-        rasFile.close()
-
-        print len(normalReadings)
-        print len(rasReadings)
-
-        return normalReadings[-5000:], rasReadings[-8000:]
-
-
+    
 class DemoWindow(QtGui.QWidget):
     def __init__(self, parent = None):
         super(DemoWindow, self).__init__(parent = parent)
