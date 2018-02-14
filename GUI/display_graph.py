@@ -104,10 +104,10 @@ class SpeedButton(QtGui.QWidget):
         self.label = QtGui.QLabel(self)
         self.label.setText("Speed")
 
-        self.startButton = QtGui.QPushButton('Start', self)
+        self.startButton = QtGui.QPushButton('Apply Contingency', self)
         self.startButton.clicked.connect(dataGenerator.start)
 
-        self.stopButton = QtGui.QPushButton('Stop', self)
+        self.stopButton = QtGui.QPushButton('Reset', self)
         self.stopButton.clicked.connect(dataGenerator.stop)
 
         self.fullPlotButton = QtGui.QPushButton("View Full Plot", self)
@@ -218,13 +218,13 @@ class GraphWidget(QtGui.QWidget):
         self.normalCurve = self.normalPlot.plot(pen = pg.mkPen('r', width = 3))
         self.normalPlot.setYRange(49, 60, padding = 0.1, update = False)
         self.normalPlot.setLabel("left", "Frequency", units = "Hz")
-        self.normalPlot.setLabel("bottom", "Time", units = "s")
+        self.normalPlot.setLabel("bottom", "Time", units = "ms")
 
         self.rasPlot = self.win.addPlot(title = "With RAS")
         self.rasCurve = self.rasPlot.plot(pen = pg.mkPen('b', width = 3))
         self.rasPlot.setYRange(58.1, 60, padding = 0.1, update = False)
         self.rasPlot.setLabel("left", "Frequency", units = "Hz")
-        self.rasPlot.setLabel("bottom", "Time", units = "s")
+        self.rasPlot.setLabel("bottom", "Time", units = "ms")
 
 
         self.horizontalLayout.addWidget(self.w1)
@@ -258,7 +258,8 @@ class GraphWidget(QtGui.QWidget):
             self.systemStateLayout.alert()
         
     def showFullPlot(self):
-        self.timer.setInterval(1000)
+        self.timer.setInterval(5000)
+        self.speed = 0.2
         normalReadings, rasReadings = parse_files()
         self.normalCurve.setData(normalReadings)
         self.rasCurve.setData(rasReadings[:len(normalReadings)])
