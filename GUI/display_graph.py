@@ -16,11 +16,16 @@ ALERT_IMAGE = "../Data/alert_state.png"
 
 WSU_LOGO = "Arpa_demo_nodes/RIAPS_Logo_list.png"
 GA1_NORMAL = "Arpa_demo_nodes/Slide1.PNG"
-SA1_NORMAL = "Arpa_demo_nodes/Slide2.PNG"
-SA2_NORMAL = "Arpa_demo_nodes/Slide3.PNG"
-GA1_RAS = "Arpa_demo_nodes/Slide4.PNG"
-SA1_RAS = "Arpa_demo_nodes/Slide5.PNG"
-SA2_RAS = "Arpa_demo_nodes/Slide6.PNG"
+GA1_ALERT = "Arpa_demo_nodes/Slide2.PNG"
+GA1_STABLE = "Arpa_demo_nodes/Slide3.PNG"
+SA1_NORMAL = "Arpa_demo_nodes/Slide4.PNG"
+SA1_ALERT = "Arpa_demo_nodes/Slide5.PNG"
+SA1_STABLE = "Arpa_demo_nodes/Slide6.PNG"
+SA2_NORMAL = "Arpa_demo_nodes/Slide7.PNG"
+SA2_ALERT = "Arpa_demo_nodes/Slide8.PNG"
+SA2_STABLE = "Arpa_demo_nodes/Slide9.PNG"
+
+
 
 LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
 
@@ -142,19 +147,24 @@ class SystemStateWidget(QtGui.QWidget):
         super(SystemStateWidget, self).__init__(parent=parent)
         self.systemStateLayout = QtGui.QVBoxLayout(self)
 
+        self.isAlert = False
+
         self.ga1Label = QtGui.QLabel(self)
         self.ga1NormalPixmap = QtGui.QPixmap(GA1_NORMAL).scaledToHeight(100)
-        self.ga1RASPixmap = QtGui.QPixmap(GA1_RAS).scaledToHeight(100)
+        self.ga1AlertPixmap = QtGui.QPixmap(GA1_ALERT).scaledToHeight(100)
+        self.ga1StablePixmap = QtGui.QPixmap(GA1_STABLE).scaledToHeight(100)
         self.ga1Label.setPixmap(self.ga1NormalPixmap)
         
         self.sa1Label = QtGui.QLabel(self)
         self.sa1NormalPixmap = QtGui.QPixmap(SA1_NORMAL).scaledToHeight(100)
-        self.sa1RASPixmap = QtGui.QPixmap(SA1_RAS).scaledToHeight(100)
+        self.sa1AlertPixmap = QtGui.QPixmap(SA1_ALERT).scaledToHeight(100)
+        self.sa1StablePixmap = QtGui.QPixmap(SA1_STABLE).scaledToHeight(100)
         self.sa1Label.setPixmap(self.sa1NormalPixmap)
 
         self.sa2Label = QtGui.QLabel(self)
         self.sa2NormalPixmap = QtGui.QPixmap(SA2_NORMAL).scaledToHeight(100)
-        self.sa2RASPixmap = QtGui.QPixmap(SA2_RAS).scaledToHeight(100)
+        self.sa2AlertPixmap = QtGui.QPixmap(SA2_ALERT).scaledToHeight(100)
+        self.sa2StablePixmap = QtGui.QPixmap(SA2_STABLE).scaledToHeight(100)
         self.sa2Label.setPixmap(self.sa2NormalPixmap)
 
         self.systemStateLayout.addWidget(self.ga1Label)
@@ -162,14 +172,23 @@ class SystemStateWidget(QtGui.QWidget):
         self.systemStateLayout.addWidget(self.sa2Label)
 
     def alert(self):
-        self.ga1Label.setPixmap(self.ga1RASPixmap)
-        self.sa1Label.setPixmap(self.sa1RASPixmap)
-        self.sa2Label.setPixmap(self.sa2RASPixmap)
+        self.isAlert = True
+        self.ga1Label.setPixmap(self.ga1AlertPixmap)
+        self.sa1Label.setPixmap(self.sa1AlertPixmap)
+        self.sa2Label.setPixmap(self.sa2AlertPixmap)
 
     def reset(self):
+        self.isAlert = False
         self.ga1Label.setPixmap(self.ga1NormalPixmap)
         self.sa1Label.setPixmap(self.sa1NormalPixmap)
         self.sa2Label.setPixmap(self.sa2NormalPixmap)
+
+    def stable(self):
+        self.isAlert = False
+        self.ga1Label.setPixmap(self.ga1StablePixmap)
+        self.sa1Label.setPixmap(self.sa1StablePixmap)
+        self.sa2Label.setPixmap(self.sa2StablePixmap)
+
 
 class GraphWidget(QtGui.QWidget):
     def __init__(self, parent=None):
@@ -254,8 +273,13 @@ class GraphWidget(QtGui.QWidget):
         if (self.speed != self.w1.getSpeed()):
             self.speed = self.w1.getSpeed()
             self.timer.setInterval(int(TIMEOUT/self.speed))
-        if self.normalReadings[self.index] < EMERGENCY_LIMIT:
+
+        if self.rasReadings[-1] < EMERGENCY_LIMIT:
             self.systemStateLayout.alert()
+        else:
+            if self.systemStateLayout.isAlert:
+                self.systemStateLayout.stable()
+            
         
     def showFullPlot(self):
         self.timer.setInterval(5000)
