@@ -25,7 +25,7 @@ SA2_NORMAL = "Arpa_demo_nodes/Slide7.PNG"
 SA2_ALERT = "Arpa_demo_nodes/Slide8.PNG"
 SA2_STABLE = "Arpa_demo_nodes/Slide9.PNG"
 
-LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing-hi.png"
+LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
 
 PLOT_SIZE = 500
 TIMEOUT = 5
@@ -118,7 +118,7 @@ class SpeedButton(QtGui.QWidget):
         self.startButton.clicked.connect(dataGenerator.start)
 
         self.stopButton = QtGui.QPushButton('Reset', self)
-        self.stopButton.clicked.connect(dataGenerator.stop)
+        #self.stopButton.clicked.connect(dataGenerator.stop)
 
         self.fullPlotButton = QtGui.QPushButton("View Full Plot", self)
 
@@ -138,6 +138,8 @@ class SpeedButton(QtGui.QWidget):
         
         print self.label.frameGeometry().width()
 
+        self.verticalLayout.setAlignment(QtCore.Qt.AlignTop)
+
         self.verticalLayout.addWidget(self.startButton)
         self.verticalLayout.addWidget(self.stopButton)
         self.verticalLayout.addWidget(self.fullPlotButton)
@@ -154,6 +156,7 @@ class SpeedButton(QtGui.QWidget):
 
     def getSpeed(self):
         return self.speed
+
         
 class SystemStateWidget(QtGui.QWidget):
     def __init__(self, parent=None):
@@ -163,7 +166,7 @@ class SystemStateWidget(QtGui.QWidget):
         height = 200
 
         if (parent):
-            height = parent.frameGeometry().height() #/ 2.5
+            height = parent.frameGeometry().height() * 8
             print height
 
         self.isAlert = False
@@ -221,6 +224,7 @@ class GraphWidget(QtGui.QWidget):
         self.dataGenerator = DataGenerator()
         self.w1 = SpeedButton(self.dataGenerator)
         self.w1.fullPlotButton.clicked.connect(self.showFullPlot)
+        self.w1.stopButton.clicked.connect(self.reset)
 
 #        self.w2 = Slider(-1, 1)
 #        self.horizontalLayout.addWidget(self.w2)
@@ -332,6 +336,10 @@ class GraphWidget(QtGui.QWidget):
     def setInterval(self):
         self.interval = self.w1.x
 
+    def reset(self):
+        self.datagenerator.stop()
+        self.systemStateWidget.reset()
+
     
 class DemoWindow(QtGui.QWidget):
     def __init__(self, parent = None):
@@ -347,7 +355,7 @@ class DemoWindow(QtGui.QWidget):
 
         self.logoPixmap = QtGui.QPixmap(WSU_LOGO)
         self.logoLabel = QtGui.QLabel(self)
-        self.logoLabel.setPixmap(self.logoPixmap.scaledToWidth(self.frameGeometry().width()))
+        self.logoLabel.setPixmap(self.logoPixmap.scaledToWidth(self.frameGeometry().width() * 1.8))
         self.verticalLayout.addWidget(self.logoLabel)
 
 
