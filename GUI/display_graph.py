@@ -14,7 +14,7 @@ RAS_FILE = "../Data/cs01_with_dufls_[VR].csv"
 NORMAL_IMAGE = "../Data/normal_state.png"
 ALERT_IMAGE = "../Data/alert_state.png"
 
-WSU_LOGO = "Arpa_demo_nodes/RIAPS_Logo_list.png"
+WSU_LOGO = "Arpa_demo_nodes/WSU_Logo.png"
 GA1_NORMAL = "Arpa_demo_nodes/Slide1.PNG"
 GA1_ALERT = "Arpa_demo_nodes/Slide2.PNG"
 GA1_STABLE = "Arpa_demo_nodes/Slide3.PNG"
@@ -25,7 +25,7 @@ SA2_NORMAL = "Arpa_demo_nodes/Slide7.PNG"
 SA2_ALERT = "Arpa_demo_nodes/Slide8.PNG"
 SA2_STABLE = "Arpa_demo_nodes/Slide9.PNG"
 
-LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
+LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing-hi.png"
 
 PLOT_SIZE = 500
 TIMEOUT = 5
@@ -163,7 +163,7 @@ class SystemStateWidget(QtGui.QWidget):
         height = 200
 
         if (parent):
-            height = parent.frameGeometry().width() * 2.5
+            height = parent.frameGeometry().height() #/ 2.5
             print height
 
         self.isAlert = False
@@ -253,6 +253,9 @@ class GraphWidget(QtGui.QWidget):
 
         self.rangeStart = 0
         self.rangeEnd = 500
+        self.rangeCount = 1
+
+        self.tickList = [(x, x) for x in range(0, 500, 200)]
 
         self.normalPlot = self.win.addPlot(title = "Without RAS")
         self.normalCurve = self.normalPlot.plot(pen = pg.mkPen('r', width = 3))
@@ -262,10 +265,7 @@ class GraphWidget(QtGui.QWidget):
 
         self.rasPlot = self.win.addPlot(title = "With RAS")
 
-        index_list = map(str, range(500, 1000))
-        index_dict = dict(enumerate(index_list))
-        self.rasPlot.getAxis('bottom').setTicks([[(0, '500'), (100, '600'), (200, '700'), (300, '800'), (400, '900'), (500, '1000')]])
-        print index_dict.items()
+        self.rasPlot.getAxis('bottom').setTicks([self.tickList])
 
         self.rasCurve = self.rasPlot.plot(pen = pg.mkPen('b', width = 3))
         self.rasPlot.setYRange(58.1, 60, padding = 0.1, update = False)
@@ -300,9 +300,14 @@ class GraphWidget(QtGui.QWidget):
 
         self.rangeStart = self.rangeStart + 1
         self.rangeEnd = self.rangeEnd + 1
-        if (self.rangeEnd > RANGE_LIMIT):
+        if (self.rangeStart > 200):
             self.rangeStart = RANGE_START
             self.rangeEnd = RANGE_END
+            self.rangeCount += 1
+
+        tickList = [(200 -self.rangeStart, 200 * self.rangeCount), (400-self.rangeStart, 200 * (self.rangeCount + 1)), (600 - self.rangeStart, 200 * (self.rangeCount + 2))]
+        self.rasPlot.getAxis('bottom').setTicks([tickList])
+        self.normalPlot.getAxis('bottom').setTicks([tickList])
 
         #self.rasPlot.setXRange(self.rangeStart, self.rangeEnd)
 
@@ -342,7 +347,7 @@ class DemoWindow(QtGui.QWidget):
 
         self.logoPixmap = QtGui.QPixmap(WSU_LOGO)
         self.logoLabel = QtGui.QLabel(self)
-        self.logoLabel.setPixmap(self.logoPixmap.scaledToHeight(100))
+        self.logoLabel.setPixmap(self.logoPixmap.scaledToWidth(self.frameGeometry().width()))
         self.verticalLayout.addWidget(self.logoLabel)
 
 
