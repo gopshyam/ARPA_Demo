@@ -25,8 +25,6 @@ SA2_NORMAL = "Arpa_demo_nodes/Slide7.PNG"
 SA2_ALERT = "Arpa_demo_nodes/Slide8.PNG"
 SA2_STABLE = "Arpa_demo_nodes/Slide9.PNG"
 
-
-
 LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
 
 PLOT_SIZE = 500
@@ -35,6 +33,12 @@ TIMEOUT = 5
 INITIAL_VALUE = 60.0
 
 EMERGENCY_LIMIT = 59.78
+
+RANGE_START = 0
+RANGE_END = 500
+RANGE_LIMIT = 10000000
+
+
 
 def parse_files():
 
@@ -247,6 +251,8 @@ class GraphWidget(QtGui.QWidget):
 
         self.horizontalLayout.addWidget(self.win)
 
+        self.rangeStart = 0
+        self.rangeEnd = 500
 
         self.normalPlot = self.win.addPlot(title = "Without RAS")
         self.normalCurve = self.normalPlot.plot(pen = pg.mkPen('r', width = 3))
@@ -255,11 +261,18 @@ class GraphWidget(QtGui.QWidget):
         self.normalPlot.setLabel("bottom", "Time", units = "ms")
 
         self.rasPlot = self.win.addPlot(title = "With RAS")
+
+        index_list = map(str, range(500, 1000))
+        index_dict = dict(enumerate(index_list))
+        self.rasPlot.getAxis('bottom').setTicks([[(0, '500'), (100, '600'), (200, '700'), (300, '800'), (400, '900'), (500, '1000')]])
+        print index_dict.items()
+
         self.rasCurve = self.rasPlot.plot(pen = pg.mkPen('b', width = 3))
         self.rasPlot.setYRange(58.1, 60, padding = 0.1, update = False)
         self.rasPlot.setLabel("left", "Frequency", units = "Hz")
         self.rasPlot.setLabel("bottom", "Time", units = "ms")
 
+        
 
         self.horizontalLayout.addWidget(self.w1)
 
@@ -284,6 +297,14 @@ class GraphWidget(QtGui.QWidget):
         self.rasReadings = self.rasReadings[1:] + [rasReading]
         self.normalCurve.setData(self.normalReadings)
         self.rasCurve.setData(self.rasReadings)
+
+        self.rangeStart = self.rangeStart + 1
+        self.rangeEnd = self.rangeEnd + 1
+        if (self.rangeEnd > RANGE_LIMIT):
+            self.rangeStart = RANGE_START
+            self.rangeEnd = RANGE_END
+
+        #self.rasPlot.setXRange(self.rangeStart, self.rangeEnd)
 
         if (self.speed != self.w1.getSpeed()):
             self.speed = self.w1.getSpeed()
