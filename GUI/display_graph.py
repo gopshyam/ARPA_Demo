@@ -108,6 +108,7 @@ class SpeedButton(QtGui.QWidget):
         self.speed = 0.25
         self.label = QtGui.QLabel(self)
         self.label.setText("Speed")
+        self.label.setFixedHeight(25)
 
         self.startButton = QtGui.QPushButton('Apply Contingency', self)
         self.startButton.clicked.connect(dataGenerator.start)
@@ -127,6 +128,12 @@ class SpeedButton(QtGui.QWidget):
         self.sb4 = QtGui.QRadioButton("x0.10")
         self.sb4.toggled.connect(lambda: self.setSpeed(0.1))
 
+        #self.speedLayout = QtGui.QVBoxLayout()
+        #self.speedLayout.addWidget(self.label)
+        #self.speedLayout.addWidget(self.sb1)
+        
+        print self.label.frameGeometry().width()
+
         self.verticalLayout.addWidget(self.startButton)
         self.verticalLayout.addWidget(self.stopButton)
         self.verticalLayout.addWidget(self.fullPlotButton)
@@ -135,6 +142,8 @@ class SpeedButton(QtGui.QWidget):
         self.verticalLayout.addWidget(self.sb2)
         self.verticalLayout.addWidget(self.sb3)
         self.verticalLayout.addWidget(self.sb4)
+        #self.verticalLayout.addLayout(self.speedLayout)
+
 
     def setSpeed(self, speed):
         self.speed = speed
@@ -147,24 +156,30 @@ class SystemStateWidget(QtGui.QWidget):
         super(SystemStateWidget, self).__init__(parent=parent)
         self.systemStateLayout = QtGui.QVBoxLayout(self)
 
+        height = 200
+
+        if (parent):
+            height = parent.frameGeometry().width() * 2.5
+            print height
+
         self.isAlert = False
 
         self.ga1Label = QtGui.QLabel(self)
-        self.ga1NormalPixmap = QtGui.QPixmap(GA1_NORMAL).scaledToHeight(100)
-        self.ga1AlertPixmap = QtGui.QPixmap(GA1_ALERT).scaledToHeight(100)
-        self.ga1StablePixmap = QtGui.QPixmap(GA1_STABLE).scaledToHeight(100)
+        self.ga1NormalPixmap = QtGui.QPixmap(GA1_NORMAL).scaledToHeight(height)
+        self.ga1AlertPixmap = QtGui.QPixmap(GA1_ALERT).scaledToHeight(height)
+        self.ga1StablePixmap = QtGui.QPixmap(GA1_STABLE).scaledToHeight(height)
         self.ga1Label.setPixmap(self.ga1NormalPixmap)
         
         self.sa1Label = QtGui.QLabel(self)
-        self.sa1NormalPixmap = QtGui.QPixmap(SA1_NORMAL).scaledToHeight(100)
-        self.sa1AlertPixmap = QtGui.QPixmap(SA1_ALERT).scaledToHeight(100)
-        self.sa1StablePixmap = QtGui.QPixmap(SA1_STABLE).scaledToHeight(100)
+        self.sa1NormalPixmap = QtGui.QPixmap(SA1_NORMAL).scaledToHeight(height)
+        self.sa1AlertPixmap = QtGui.QPixmap(SA1_ALERT).scaledToHeight(height)
+        self.sa1StablePixmap = QtGui.QPixmap(SA1_STABLE).scaledToHeight(height)
         self.sa1Label.setPixmap(self.sa1NormalPixmap)
 
         self.sa2Label = QtGui.QLabel(self)
-        self.sa2NormalPixmap = QtGui.QPixmap(SA2_NORMAL).scaledToHeight(100)
-        self.sa2AlertPixmap = QtGui.QPixmap(SA2_ALERT).scaledToHeight(100)
-        self.sa2StablePixmap = QtGui.QPixmap(SA2_STABLE).scaledToHeight(100)
+        self.sa2NormalPixmap = QtGui.QPixmap(SA2_NORMAL).scaledToHeight(height)
+        self.sa2AlertPixmap = QtGui.QPixmap(SA2_ALERT).scaledToHeight(height)
+        self.sa2StablePixmap = QtGui.QPixmap(SA2_STABLE).scaledToHeight(height)
         self.sa2Label.setPixmap(self.sa2NormalPixmap)
 
         self.systemStateLayout.addWidget(self.ga1Label)
@@ -248,7 +263,7 @@ class GraphWidget(QtGui.QWidget):
 
         self.horizontalLayout.addWidget(self.w1)
 
-        self.systemStateLayout = SystemStateWidget()
+        self.systemStateLayout = SystemStateWidget(self)
         
         self.horizontalLayout.addWidget(self.systemStateLayout)
 
@@ -295,6 +310,7 @@ class GraphWidget(QtGui.QWidget):
 class DemoWindow(QtGui.QWidget):
     def __init__(self, parent = None):
         super(DemoWindow, self).__init__(parent = parent)
+        self.showMaximized()
 
         self.graph = GraphWidget(self)
 
