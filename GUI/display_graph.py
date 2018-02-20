@@ -15,6 +15,11 @@ NORMAL_IMAGE = "../Data/normal_state.png"
 ALERT_IMAGE = "../Data/alert_state.png"
 
 WSU_LOGO = "Arpa_demo_nodes/WSU_Logo.png"
+
+GA1_IMAGE = "Arpa_demo_nodes/Slide1.PNG"
+SA1_IMAGE = "Arpa_demo_nodes/Slide2.PNG"
+SA2_IMAGE = "Arpa_demo_nodes/Slide3.PNG"
+
 GA1_NORMAL = "Arpa_demo_nodes/Slide1.PNG"
 GA1_ALERT = "Arpa_demo_nodes/Slide2.PNG"
 GA1_STABLE = "Arpa_demo_nodes/Slide3.PNG"
@@ -27,7 +32,7 @@ SA2_STABLE = "Arpa_demo_nodes/Slide9.PNG"
 
 LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
 
-PLOT_SIZE = 500
+PLOT_SIZE = 5000
 TIMEOUT = 5
 
 INITIAL_VALUE = 60.0
@@ -38,7 +43,10 @@ RANGE_START = 0
 RANGE_END = 500
 RANGE_LIMIT = 10000000
 
-
+NORMAL_STATE = 0
+DETECTED_STATE = 1
+GA_CUT_STATE = 2
+SA_CUT_STATE = 3
 
 def parse_files():
 
@@ -122,6 +130,8 @@ class SpeedButton(QtGui.QWidget):
 
         self.fullPlotButton = QtGui.QPushButton("View Full Plot", self)
 
+        self.zoomButton = QtGui.QPushButton("Zoom Out", self)
+
         self.sb1 = QtGui.QRadioButton("x1")
         self.sb1.toggled.connect(lambda: self.setSpeed(1))
         self.sb2 = QtGui.QRadioButton("x0.5")
@@ -143,6 +153,7 @@ class SpeedButton(QtGui.QWidget):
         self.verticalLayout.addWidget(self.startButton)
         self.verticalLayout.addWidget(self.stopButton)
         self.verticalLayout.addWidget(self.fullPlotButton)
+        self.verticalLayout.addWidget(self.zoomButton)
         self.verticalLayout.addWidget(self.label)
         self.verticalLayout.addWidget(self.sb1)
         self.verticalLayout.addWidget(self.sb2)
@@ -157,6 +168,54 @@ class SpeedButton(QtGui.QWidget):
     def getSpeed(self):
         return self.speed
 
+class BBInfo(QtGui.QWidget):
+    def __init__(self, parent=None):
+        super(BBInfo, self).__init__(parent=parent)
+        
+        self.label1text = ""
+        self.label2text = ""
+        self.label3text = "Normal Operation"
+
+        self.layout = QtGui.QVBoxLayout(self)
+        self.label1 = QtGui.QLabel(self)
+#        self.label1.setText("Normal Operation")
+
+        self.label2 = QtGui.QLabel(self)
+#        self.label2.setText("Issue detected")
+
+        self.label3 = QtGui.QLabel(self)
+        self.label3.setStyleSheet("QLabel { color : red; }")
+        self.label3.setText(self.label3text)
+
+        self.layout.addWidget(self.label1)
+        self.layout.addWidget(self.label2)
+        self.layout.addWidget(self.label3)
+
+    def update(self, text):
+        self.label1text = self.label2text
+        self.label2text = self.label3text
+        self.label3text = text
+
+        self.label1.setText(self.label1text)
+        self.label2.setText(self.label2text)
+        self.label3.setText(self.label3text)
+
+   
+class SystemState(QtGui.QWidget):
+    def __init__(self, image, parent=None):
+        super(SystemState, self).__init__(parent=parent)
+        self.layout = QtGui.QHBoxLayout(self)
+
+        self.image = QtGui.QPixmap(image).scaledToHeight(100)
+        self.imageLabel = QtGui.QLabel(self)
+        self.imageLabel.setPixmap(self.image)
+        self.bbinfo = BBInfo()
+
+        self.layout.addWidget(self.imageLabel)
+        self.layout.addWidget(self.bbinfo)
+
+    def updateText(self, text):
+        self.bbinfo.update(text)
         
 class SystemStateWidget(QtGui.QWidget):
     def __init__(self, parent=None):
@@ -166,50 +225,32 @@ class SystemStateWidget(QtGui.QWidget):
         height = 200
 
         if (parent):
-            height = parent.frameGeometry().height() * 8
+            height = parent.frameGeometry().height() * 1.0
             print height
 
         self.isAlert = False
 
-        self.ga1Label = QtGui.QLabel(self)
-        self.ga1NormalPixmap = QtGui.QPixmap(GA1_NORMAL).scaledToHeight(height)
-        self.ga1AlertPixmap = QtGui.QPixmap(GA1_ALERT).scaledToHeight(height)
-        self.ga1StablePixmap = QtGui.QPixmap(GA1_STABLE).scaledToHeight(height)
-        self.ga1Label.setPixmap(self.ga1NormalPixmap)
-        
-        self.sa1Label = QtGui.QLabel(self)
-        self.sa1NormalPixmap = QtGui.QPixmap(SA1_NORMAL).scaledToHeight(height)
-        self.sa1AlertPixmap = QtGui.QPixmap(SA1_ALERT).scaledToHeight(height)
-        self.sa1StablePixmap = QtGui.QPixmap(SA1_STABLE).scaledToHeight(height)
-        self.sa1Label.setPixmap(self.sa1NormalPixmap)
+        self.ga1_state = SystemState(GA1_IMAGE)
+        self.sa1_state = SystemState(SA1_IMAGE)
+        self.sa2_state = SystemState(SA2_IMAGE)
 
-        self.sa2Label = QtGui.QLabel(self)
-        self.sa2NormalPixmap = QtGui.QPixmap(SA2_NORMAL).scaledToHeight(height)
-        self.sa2AlertPixmap = QtGui.QPixmap(SA2_ALERT).scaledToHeight(height)
-        self.sa2StablePixmap = QtGui.QPixmap(SA2_STABLE).scaledToHeight(height)
-        self.sa2Label.setPixmap(self.sa2NormalPixmap)
+        self.systemStateLayout.addWidget(self.ga1_state)
+        self.systemStateLayout.addWidget(self.sa1_state)
+        self.systemStateLayout.addWidget(self.sa2_state)
+        #self.systemStateLayout.addWidget(self.ga1Label)
+        #self.systemStateLayout.addWidget(self.sa1Label)
+        #self.systemStateLayout.addWidget(self.sa2Label)
 
-        self.systemStateLayout.addWidget(self.ga1Label)
-        self.systemStateLayout.addWidget(self.sa1Label)
-        self.systemStateLayout.addWidget(self.sa2Label)
 
-    def alert(self):
-        self.isAlert = True
-        self.ga1Label.setPixmap(self.ga1AlertPixmap)
-        self.sa1Label.setPixmap(self.sa1AlertPixmap)
-        self.sa2Label.setPixmap(self.sa2AlertPixmap)
+    def ga1_update(self, text):
+        self.ga1_state.updateText(text)
 
-    def reset(self):
-        self.isAlert = False
-        self.ga1Label.setPixmap(self.ga1NormalPixmap)
-        self.sa1Label.setPixmap(self.sa1NormalPixmap)
-        self.sa2Label.setPixmap(self.sa2NormalPixmap)
+    def sa1_update(self, text):
+        self.sa1_state.updateText(text)
 
-    def stable(self):
-        self.isAlert = False
-        self.ga1Label.setPixmap(self.ga1StablePixmap)
-        self.sa1Label.setPixmap(self.sa1StablePixmap)
-        self.sa2Label.setPixmap(self.sa2StablePixmap)
+    def sa2_update(self, text):
+        self.sa2_state.updateText(text)
+
 
 
 class GraphWidget(QtGui.QWidget):
@@ -219,11 +260,18 @@ class GraphWidget(QtGui.QWidget):
         self.speed = 1
         self.index = 0
 
+        self.plotSize = 500
+
+        self.isZoomed = True
+
+        self.state = NORMAL_STATE
+
         self.horizontalLayout = QtGui.QHBoxLayout(self)
 
         self.dataGenerator = DataGenerator()
         self.w1 = SpeedButton(self.dataGenerator)
         self.w1.fullPlotButton.clicked.connect(self.showFullPlot)
+        self.w1.zoomButton.clicked.connect(self.toggleZoom)
         self.w1.stopButton.clicked.connect(self.reset)
 
 #        self.w2 = Slider(-1, 1)
@@ -286,7 +334,7 @@ class GraphWidget(QtGui.QWidget):
 
         self.lineDiagramLabel = QtGui.QLabel(self)
         self.lineDiagramPixmap = QtGui.QPixmap(LINE_DIAGRAM)
-        self.lineDiagramLabel.setPixmap(self.lineDiagramPixmap)
+        self.lineDiagramLabel.setPixmap(self.lineDiagramPixmap.scaledToHeight(300))
 
         self.horizontalLayout.addWidget(self.lineDiagramLabel)
 
@@ -297,10 +345,10 @@ class GraphWidget(QtGui.QWidget):
 
     def update(self):
         normalReading, rasReading = self.dataGenerator.get()
-        self.normalReadings = self.normalReadings[1:] + [normalReading]
-        self.rasReadings = self.rasReadings[1:] + [rasReading]
-        self.normalCurve.setData(self.normalReadings)
-        self.rasCurve.setData(self.rasReadings)
+        self.normalReadings = self.normalReadings[-PLOT_SIZE:] + [normalReading]
+        self.rasReadings = self.rasReadings[-PLOT_SIZE:] + [rasReading]
+        self.normalCurve.setData(self.normalReadings[-self.plotSize:])
+        self.rasCurve.setData(self.rasReadings[-self.plotSize:])
 
         self.rangeStart = self.rangeStart + 1
         self.rangeEnd = self.rangeEnd + 1
@@ -309,7 +357,11 @@ class GraphWidget(QtGui.QWidget):
             self.rangeEnd = RANGE_END
             self.rangeCount += 1
 
-        tickList = [(200 -self.rangeStart, 200 * self.rangeCount), (400-self.rangeStart, 200 * (self.rangeCount + 1)), (600 - self.rangeStart, 200 * (self.rangeCount + 2))]
+        if self.isZoomed:
+            tickList = [(200 -self.rangeStart, 200 * self.rangeCount), (400-self.rangeStart, 200 * (self.rangeCount + 1)), (600 - self.rangeStart, 200 * (self.rangeCount + 2))]
+        else:
+            tickList = [(2000 -self.rangeStart, 2000 * self.rangeCount), (4000-self.rangeStart, 2000 * (self.rangeCount + 1)), (6000 - self.rangeStart, 2000 * (self.rangeCount + 2))]
+
         self.rasPlot.getAxis('bottom').setTicks([tickList])
         self.normalPlot.getAxis('bottom').setTicks([tickList])
 
@@ -319,11 +371,32 @@ class GraphWidget(QtGui.QWidget):
             self.speed = self.w1.getSpeed()
             self.timer.setInterval(int(TIMEOUT/self.speed))
 
-        if self.rasReadings[-1] < EMERGENCY_LIMIT:
-            self.systemStateLayout.alert()
-        else:
-            if self.systemStateLayout.isAlert:
-                self.systemStateLayout.stable()
+#HANDLE STATE CHANGES
+
+        if self.state == NORMAL_STATE:
+            if self.rasReadings[-1] < EMERGENCY_LIMIT:
+                self.systemStateLayout.ga1_update("Frequency Issue Detected")
+                self.delay_count = 250
+                self.state = DETECTED_STATE
+
+        if self.state == DETECTED_STATE:
+            self.delay_count -= 1
+            if self.delay_count == 0:
+                self.state = GA_CUT_STATE
+                self.delay_count = 250
+
+                self.systemStateLayout.ga1_update("Power deficiency estimated")
+                self.systemStateLayout.sa1_update("Informed of Issue")
+                self.systemStateLayout.sa2_update("Informed of Issue")
+
+        if self.state == GA_CUT_STATE:
+            self.delay_count -= 1
+            if self.delay_count == 0:
+                self.state = SA_CUT_STATE
+                self.systemStateLayout.ga1_update("GA1 cuts 6.456 MW")
+                self.systemStateLayout.sa1_update("SA1 cuts 6.456 MW")
+                self.systemStateLayout.sa2_update("SA2 cuts 5.465 MW")
+
             
         
     def showFullPlot(self):
@@ -337,10 +410,23 @@ class GraphWidget(QtGui.QWidget):
         self.interval = self.w1.x
 
     def reset(self):
-        self.datagenerator.stop()
-        self.systemStateWidget.reset()
+        self.dataGenerator.stop()
+        self.state = NORMAL_STATE
 
-    
+        self.systemStateLayout.ga1_update("Normal Operation")
+        self.systemStateLayout.sa1_update("Normal Operation")
+        self.systemStateLayout.sa2_update("Normal Operation")
+
+    def toggleZoom(self):
+        self.isZoomed = not self.isZoomed
+        if self.isZoomed:
+            self.w1.zoomButton.setText("Zoom Out")
+            self.plotSize = 500
+        else:
+            self.w1.zoomButton.setText("Zoom In")
+            self.plotSize = 5000
+
+
 class DemoWindow(QtGui.QWidget):
     def __init__(self, parent = None):
         super(DemoWindow, self).__init__(parent = parent)
@@ -348,14 +434,13 @@ class DemoWindow(QtGui.QWidget):
 
         self.graph = GraphWidget(self)
 
-        
         self.verticalLayout = QtGui.QVBoxLayout(self)
         self.verticalLayout.addWidget(self.graph)
 
 
         self.logoPixmap = QtGui.QPixmap(WSU_LOGO)
         self.logoLabel = QtGui.QLabel(self)
-        self.logoLabel.setPixmap(self.logoPixmap.scaledToWidth(self.frameGeometry().width() * 1.8))
+        self.logoLabel.setPixmap(self.logoPixmap.scaledToWidth(self.frameGeometry().width() * 1.6))
         self.verticalLayout.addWidget(self.logoLabel)
 
 
