@@ -15,6 +15,7 @@ NORMAL_IMAGE = "../Data/normal_state.png"
 ALERT_IMAGE = "../Data/alert_state.png"
 
 WSU_LOGO = "Arpa_demo_nodes/WSU_Logo.png"
+GRAPH_IMAGE = "Arpa_demo_nodes/UFLS_Graph.png"
 
 GA1_IMAGE = "Arpa_demo_nodes/Slide1.PNG"
 SA1_IMAGE = "Arpa_demo_nodes/Slide2.PNG"
@@ -30,7 +31,7 @@ SA2_NORMAL = "Arpa_demo_nodes/Slide7.PNG"
 SA2_ALERT = "Arpa_demo_nodes/Slide8.PNG"
 SA2_STABLE = "Arpa_demo_nodes/Slide9.PNG"
 
-LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
+LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing-hi.png"
 
 PLOT_SIZE = 5000
 TIMEOUT = 5
@@ -207,7 +208,7 @@ class SystemState(QtGui.QWidget):
         super(SystemState, self).__init__(parent=parent)
         self.layout = QtGui.QHBoxLayout(self)
 
-        self.image = QtGui.QPixmap(image).scaledToHeight(200)
+        self.image = QtGui.QPixmap(image).scaledToHeight(170)
         self.imageLabel = QtGui.QLabel(self)
         self.imageLabel.setPixmap(self.image)
         self.bbinfo = BBInfo()
@@ -326,18 +327,17 @@ class GraphWidget(QtGui.QWidget):
         self.rasPlot.setLabel("bottom", "Time", units = "ms")
 
         
-
         self.horizontalLayout.addWidget(self.w1)
 
-        self.systemStateLayout = SystemStateWidget(self)
-        
+        self.systemStateLayout = SystemStateWidget(self) 
         self.horizontalLayout.addWidget(self.systemStateLayout)
 
         self.lineDiagramLabel = QtGui.QLabel(self)
         self.lineDiagramPixmap = QtGui.QPixmap(LINE_DIAGRAM)
-        self.lineDiagramLabel.setPixmap(self.lineDiagramPixmap.scaledToHeight(300))
+        self.lineDiagramLabel.setPixmap(self.lineDiagramPixmap.scaledToHeight(550))
 
         self.horizontalLayout.addWidget(self.lineDiagramLabel)
+
 
         self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.update)
@@ -376,7 +376,7 @@ class GraphWidget(QtGui.QWidget):
 
         if self.state == NORMAL_STATE:
             if self.rasReadings[-1] < EMERGENCY_LIMIT:
-                self.systemStateLayout.ga1_update("Frequency Issue Detected")
+                self.systemStateLayout.ga1_update("Frequency Issue\nDetected")
                 self.delay_count = 250
                 self.state = DETECTED_STATE
 
@@ -444,6 +444,25 @@ class GraphWidget(QtGui.QWidget):
             self.plotSize = 5000
 
 
+
+class StaticInfo(QtGui.QWidget):
+    def __init__(self, parent = None):
+        super(StaticInfo, self).__init__(parent = parent)
+
+        self.layout = QtGui.QHBoxLayout(self)
+
+        self.logoPixmap = QtGui.QPixmap(WSU_LOGO)
+        self.logoLabel = QtGui.QLabel(self)
+        self.logoLabel.setPixmap(self.logoPixmap.scaledToWidth(1200))
+
+        self.graphPixmap = QtGui.QPixmap(GRAPH_IMAGE)
+        self.graphLabel = QtGui.QLabel(self)
+        self.graphLabel.setPixmap(self.graphPixmap.scaledToWidth(550))
+
+        self.layout.addWidget(self.logoLabel)
+        self.layout.addWidget(self.graphLabel)
+
+
 class DemoWindow(QtGui.QWidget):
     def __init__(self, parent = None):
         super(DemoWindow, self).__init__(parent = parent)
@@ -455,10 +474,7 @@ class DemoWindow(QtGui.QWidget):
         self.verticalLayout.addWidget(self.graph)
 
 
-        self.logoPixmap = QtGui.QPixmap(WSU_LOGO)
-        self.logoLabel = QtGui.QLabel(self)
-        self.logoLabel.setPixmap(self.logoPixmap.scaledToWidth(self.frameGeometry().width() * 1.6))
-        self.verticalLayout.addWidget(self.logoLabel)
+        self.verticalLayout.addWidget(StaticInfo(self))
 
 
 
