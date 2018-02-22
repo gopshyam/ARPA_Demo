@@ -47,6 +47,7 @@ NORMAL_STATE = 0
 DETECTED_STATE = 1
 GA_CUT_STATE = 2
 SA_CUT_STATE = 3
+STABLE_STATE = 4
 
 def parse_files():
 
@@ -206,7 +207,7 @@ class SystemState(QtGui.QWidget):
         super(SystemState, self).__init__(parent=parent)
         self.layout = QtGui.QHBoxLayout(self)
 
-        self.image = QtGui.QPixmap(image).scaledToHeight(100)
+        self.image = QtGui.QPixmap(image).scaledToHeight(200)
         self.imageLabel = QtGui.QLabel(self)
         self.imageLabel.setPixmap(self.image)
         self.bbinfo = BBInfo()
@@ -385,17 +386,33 @@ class GraphWidget(QtGui.QWidget):
                 self.state = GA_CUT_STATE
                 self.delay_count = 250
 
-                self.systemStateLayout.ga1_update("Power deficiency estimated")
+                self.systemStateLayout.ga1_update("Active Power deficiency \nestimated - 19.37 MW")
                 self.systemStateLayout.sa1_update("Informed of Issue")
                 self.systemStateLayout.sa2_update("Informed of Issue")
 
         if self.state == GA_CUT_STATE:
             self.delay_count -= 1
             if self.delay_count == 0:
+                self.delay_count = 250
                 self.state = SA_CUT_STATE
-                self.systemStateLayout.ga1_update("GA1 cuts 6.456 MW")
-                self.systemStateLayout.sa1_update("SA1 cuts 6.456 MW")
-                self.systemStateLayout.sa2_update("SA2 cuts 5.465 MW")
+                self.systemStateLayout.ga1_update("GA1 cuts 6.456 MW\n(32.27%)")
+                self.systemStateLayout.sa1_update("SA1 cuts 6.456 MW\n(24.83%)")
+                self.systemStateLayout.sa2_update("SA2 cuts 5.465 MW\n(24.83%)")
+
+        if self.state == SA_CUT_STATE:
+            self.delay_count -= 1
+            if self.delay_count == 0:
+                self.state = STABLE_STATE
+                self.systemStateLayout.ga1_update("Frequency Stabilized")
+                self.systemStateLayout.sa1_update("Frequency Stabilized")
+                self.systemStateLayout.sa2_update("Frequency Stabilized")
+
+        if self.state == STABLE_STATE:
+            if self.rasReadings[-1] >= 60.0:
+                self.state = NORMAL_STATE
+                self.systemStateLayout.ga1_update("Normal Operation")
+                self.systemStateLayout.sa1_update("Normal Operation")
+                self.systemStateLayout.sa2_update("Normal Operation")
 
             
         
