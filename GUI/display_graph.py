@@ -31,7 +31,7 @@ SA2_NORMAL = "Arpa_demo_nodes/Slide7.PNG"
 SA2_ALERT = "Arpa_demo_nodes/Slide8.PNG"
 SA2_STABLE = "Arpa_demo_nodes/Slide9.PNG"
 
-LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing-hi.png"
+LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
 
 PLOT_SIZE = 5000
 TIMEOUT = 5
@@ -332,11 +332,11 @@ class GraphWidget(QtGui.QWidget):
         self.systemStateLayout = SystemStateWidget(self) 
         self.horizontalLayout.addWidget(self.systemStateLayout)
 
-        self.lineDiagramLabel = QtGui.QLabel(self)
-        self.lineDiagramPixmap = QtGui.QPixmap(LINE_DIAGRAM)
-        self.lineDiagramLabel.setPixmap(self.lineDiagramPixmap.scaledToHeight(550))
+        #self.lineDiagramLabel = QtGui.QLabel(self)
+        #self.lineDiagramPixmap = QtGui.QPixmap(LINE_DIAGRAM)
+        #self.lineDiagramLabel.setPixmap(self.lineDiagramPixmap.scaledToHeight(550))
 
-        self.horizontalLayout.addWidget(self.lineDiagramLabel)
+        #self.horizontalLayout.addWidget(self.lineDiagramLabel)
 
 
         self.timer = pg.QtCore.QTimer()
@@ -455,18 +455,36 @@ class StaticInfo(QtGui.QWidget):
         self.logoLabel = QtGui.QLabel(self)
         self.logoLabel.setPixmap(self.logoPixmap.scaledToWidth(1200))
 
-        self.graphPixmap = QtGui.QPixmap(GRAPH_IMAGE)
-        self.graphLabel = QtGui.QLabel(self)
-        self.graphLabel.setPixmap(self.graphPixmap.scaledToWidth(550))
+        #self.graphPixmap = QtGui.QPixmap(GRAPH_IMAGE)
+        #self.graphLabel = QtGui.QLabel(self)
+        #self.graphLabel.setPixmap(self.graphPixmap.scaledToWidth(550))
 
         self.layout.addWidget(self.logoLabel)
+        #self.layout.addWidget(self.graphLabel)
+
+
+class LineDiagram(QtGui.QWidget):
+    def __init__(self, parent = None):
+        super(LineDiagram, self).__init__(parent = parent)
+
+        self.layout = QtGui.QVBoxLayout(self)
+
+        self.lineLabel = QtGui.QLabel(self)
+        self.linePixmap = QtGui.QPixmap(LINE_DIAGRAM)
+        self.lineLabel.setPixmap(self.linePixmap.scaledToHeight(80))
+
+        self.graphLabel = QtGui.QLabel(self)
+        self.graphPixmap = QtGui.QPixmap(GRAPH_IMAGE)
+        self.graphLabel.setPixmap(self.graphPixmap.scaledToHeight(50))
+
+        self.layout.addWidget(self.lineLabel)
         self.layout.addWidget(self.graphLabel)
 
 
 class DemoWindow(QtGui.QWidget):
     def __init__(self, parent = None):
         super(DemoWindow, self).__init__(parent = parent)
-        self.showMaximized()
+        #self.showMaximized()
 
         self.graph = GraphWidget(self)
 
@@ -477,11 +495,24 @@ class DemoWindow(QtGui.QWidget):
         self.verticalLayout.addWidget(StaticInfo(self))
 
 
+class AppWindow(QtGui.QWidget):
+    def __init__(self, parent = None):
+        super(AppWindow, self).__init__(parent = parent)
+        self.showMaximized()
+
+        self.layout = QtGui.QHBoxLayout(self)
+
+        self.demoWindow = DemoWindow(self)
+
+        self.lineDiagram = LineDiagram(self)
+
+        self.layout.addWidget(self.demoWindow)
+        self.layout.addWidget(self.lineDiagram)
 
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
-    w = DemoWindow()
+    w = AppWindow()
     w.show()
     sys.exit(app.exec_())
 
