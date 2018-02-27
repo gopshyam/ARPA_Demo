@@ -186,7 +186,7 @@ class BBInfo(QtGui.QWidget):
 #        self.label2.setText("Issue detected")
 
         self.label3 = QtGui.QLabel(self)
-        self.label3.setStyleSheet("QLabel { color : red; }")
+        self.label3.setStyleSheet("QLabel { color : green; font-size:20px}") 
         self.label3.setText(self.label3text)
 
         self.layout.addWidget(self.label1)
@@ -202,13 +202,19 @@ class BBInfo(QtGui.QWidget):
         self.label2.setText(self.label2text)
         self.label3.setText(self.label3text)
 
+    def setRed(self):
+        self.label3.setStyleSheet("QLabel { color : red; font-size:20px}")
+
+    def setGreen(self):
+        self.label3.setStyleSheet("QLabel { color : green; font-size:20px}")
+
    
 class SystemState(QtGui.QWidget):
     def __init__(self, image, parent=None):
         super(SystemState, self).__init__(parent=parent)
         self.layout = QtGui.QHBoxLayout(self)
 
-        self.image = QtGui.QPixmap(image).scaledToHeight(170)
+        self.image = QtGui.QPixmap(image).scaledToHeight(120)
         self.imageLabel = QtGui.QLabel(self)
         self.imageLabel.setPixmap(self.image)
         self.bbinfo = BBInfo()
@@ -253,6 +259,16 @@ class SystemStateWidget(QtGui.QWidget):
     def sa2_update(self, text):
         self.sa2_state.updateText(text)
 
+    def setRed(self):
+        self.ga1_state.bbinfo.setRed()
+        self.sa1_state.bbinfo.setRed()
+        self.sa2_state.bbinfo.setRed()
+
+    def setGreen(self):
+        self.ga1_state.bbinfo.setGreen()
+        self.sa1_state.bbinfo.setGreen()
+        self.sa2_state.bbinfo.setGreen()
+
 
 
 class GraphWidget(QtGui.QWidget):
@@ -285,6 +301,8 @@ class GraphWidget(QtGui.QWidget):
 #        self.w4 = Slider(-10, 10)
 #        self.horizontalLayout.addWidget(self.w4)
 
+
+
         self.win = pg.GraphicsWindow(title="UFLS Demo")
         #self.update()
 
@@ -299,7 +317,7 @@ class GraphWidget(QtGui.QWidget):
         #time_list = [(self.normalTimes[i+1] - self.normalTimes[i]).microseconds for i in range(len(self.normalTimes) - 1) ]
         #print float(sum(time_list)/1000)/float(len(time_list))
 
-        self.win.resize(1000, 600)
+        #self.win.resize(1000, 600)
 
         pg.setConfigOptions(antialias = True)
 
@@ -377,6 +395,7 @@ class GraphWidget(QtGui.QWidget):
         if self.state == NORMAL_STATE:
             if self.rasReadings[-1] < EMERGENCY_LIMIT:
                 self.systemStateLayout.ga1_update("Frequency Issue\nDetected")
+                self.systemStateLayout.setRed()
                 self.delay_count = 250
                 self.state = DETECTED_STATE
 
@@ -384,7 +403,7 @@ class GraphWidget(QtGui.QWidget):
             self.delay_count -= 1
             if self.delay_count == 0:
                 self.state = GA_CUT_STATE
-                self.delay_count = 250
+                self.delay_count = 150
 
                 self.systemStateLayout.ga1_update("Active Power deficiency \nestimated - 19.37 MW")
                 self.systemStateLayout.sa1_update("Informed of Issue")
@@ -403,9 +422,10 @@ class GraphWidget(QtGui.QWidget):
             self.delay_count -= 1
             if self.delay_count == 0:
                 self.state = STABLE_STATE
-                self.systemStateLayout.ga1_update("Frequency Stabilized")
-                self.systemStateLayout.sa1_update("Frequency Stabilized")
-                self.systemStateLayout.sa2_update("Frequency Stabilized")
+                self.systemStateLayout.ga1_update("Frequency Drop Stops")
+                self.systemStateLayout.sa1_update("Frequency Drop Stops")
+                self.systemStateLayout.sa2_update("Frequency Drop Stops")
+                self.systemStateLayout.setGreen()
 
         if self.state == STABLE_STATE:
             if self.rasReadings[-1] >= 60.0:
@@ -471,11 +491,11 @@ class LineDiagram(QtGui.QWidget):
 
         self.lineLabel = QtGui.QLabel(self)
         self.linePixmap = QtGui.QPixmap(LINE_DIAGRAM)
-        self.lineLabel.setPixmap(self.linePixmap.scaledToHeight(80))
+        self.lineLabel.setPixmap(self.linePixmap.scaledToHeight(600))
 
         self.graphLabel = QtGui.QLabel(self)
         self.graphPixmap = QtGui.QPixmap(GRAPH_IMAGE)
-        self.graphLabel.setPixmap(self.graphPixmap.scaledToHeight(50))
+        self.graphLabel.setPixmap(self.graphPixmap.scaledToHeight(300))
 
         self.layout.addWidget(self.lineLabel)
         self.layout.addWidget(self.graphLabel)
@@ -499,6 +519,11 @@ class AppWindow(QtGui.QWidget):
     def __init__(self, parent = None):
         super(AppWindow, self).__init__(parent = parent)
         self.showMaximized()
+
+        p = self.palette()
+        p.setColor(self.backgroundRole(), QtGui.QColor('white'))
+        self.setPalette(p)
+
 
         self.layout = QtGui.QHBoxLayout(self)
 
