@@ -17,9 +17,9 @@ ALERT_IMAGE = "../Data/alert_state.png"
 WSU_LOGO = "Arpa_demo_nodes/WSU_Logo.png"
 GRAPH_IMAGE = "Arpa_demo_nodes/UFLS_Graph.png"
 
-GA1_IMAGE = "Arpa_demo_nodes/Slide1.PNG"
-SA1_IMAGE = "Arpa_demo_nodes/Slide2.PNG"
-SA2_IMAGE = "Arpa_demo_nodes/Slide3.PNG"
+GA1_IMAGE = "Arpa_demo_nodes/Node1.PNG"
+SA1_IMAGE = "Arpa_demo_nodes/Node2.PNG"
+SA2_IMAGE = "Arpa_demo_nodes/Node3.PNG"
 
 GA1_NORMAL = "Arpa_demo_nodes/Slide1.PNG"
 GA1_ALERT = "Arpa_demo_nodes/Slide2.PNG"
@@ -180,7 +180,6 @@ class BBInfo(QtGui.QWidget):
 
         self.layout = QtGui.QVBoxLayout(self)
         self.label1 = QtGui.QLabel(self)
-#        self.label1.setText("Normal Operation")
 
         self.label2 = QtGui.QLabel(self)
 #        self.label2.setText("Issue detected")
@@ -188,6 +187,8 @@ class BBInfo(QtGui.QWidget):
         self.label3 = QtGui.QLabel(self)
         self.label3.setStyleSheet("QLabel { color : green; font-size:20px}") 
         self.label3.setText(self.label3text)
+
+        self.label1.setFixedWidth(250)
 
         self.layout.addWidget(self.label1)
         self.layout.addWidget(self.label2)
@@ -304,6 +305,7 @@ class GraphWidget(QtGui.QWidget):
 
 
         self.win = pg.GraphicsWindow(title="UFLS Demo")
+        self.win2 = pg.GraphicsWindow(title="UFLS Demo")
         #self.update()
 
         #self.w1.slider.valueChanged.connect(self.setInterval)
@@ -321,7 +323,10 @@ class GraphWidget(QtGui.QWidget):
 
         pg.setConfigOptions(antialias = True)
 
-        self.horizontalLayout.addWidget(self.win)
+        self.vlayout = QtGui.QVBoxLayout()
+        self.vlayout.addWidget(self.win)
+        self.vlayout.addWidget(self.win2)
+        self.horizontalLayout.addLayout(self.vlayout)
 
         self.rangeStart = 0
         self.rangeEnd = 500
@@ -333,7 +338,7 @@ class GraphWidget(QtGui.QWidget):
         self.normalCurve = self.normalPlot.plot(pen = pg.mkPen('r', width = 3))
         self.normalPlot.setYRange(49, 60, padding = 0.1, update = False)
         self.normalPlot.setLabel("left", "Frequency", units = "Hz")
-        self.normalPlot.setLabel("bottom", "Time", units = "ms")
+        self.normalPlot.setLabel("bottom", "Time (ms) ")
 
         self.rasPlot = self.win.addPlot(title = "With RAS")
 
@@ -342,13 +347,29 @@ class GraphWidget(QtGui.QWidget):
         self.rasCurve = self.rasPlot.plot(pen = pg.mkPen('b', width = 3))
         self.rasPlot.setYRange(58.1, 60, padding = 0.1, update = False)
         self.rasPlot.setLabel("left", "Frequency", units = "Hz")
-        self.rasPlot.setLabel("bottom", "Time", units = "ms")
+        self.rasPlot.setLabel("bottom", "Time (ms)")
+
+        self.bothPlot = self.win2.addPlot(title = "Comparison")
+        self.bothPlot.setYRange(49, 60, padding = 0.1, update = False)
+        self.bothPlot.setLabel("left", "Frequency", units = "Hz")
+        self.bothPlot.setLabel("bottom", "Time (ms)")
+        self.bothPlot.getAxis('bottom').setTicks([self.tickList])
 
         
-        self.horizontalLayout.addWidget(self.w1)
+        self.bothNormalCurve = pg.PlotCurveItem()
+        self.bothNormalCurve.setPen(pg.mkPen('r', width = 3))
+        self.bothRasCurve = pg.PlotCurveItem()
+        self.bothRasCurve.setPen(pg.mkPen('b', width = 3))
+        
+
+        self.bothPlot.addItem(self.bothNormalCurve)
+        self.bothPlot.addItem(self.bothRasCurve)
+
 
         self.systemStateLayout = SystemStateWidget(self) 
         self.horizontalLayout.addWidget(self.systemStateLayout)
+
+        #self.horizontalLayout.addWidget(self.w1)
 
         #self.lineDiagramLabel = QtGui.QLabel(self)
         #self.lineDiagramPixmap = QtGui.QPixmap(LINE_DIAGRAM)
@@ -368,6 +389,10 @@ class GraphWidget(QtGui.QWidget):
         self.rasReadings = self.rasReadings[-PLOT_SIZE:] + [rasReading]
         self.normalCurve.setData(self.normalReadings[-self.plotSize:])
         self.rasCurve.setData(self.rasReadings[-self.plotSize:])
+        
+        self.bothNormalCurve.setData(self.normalReadings[-self.plotSize:])
+        self.bothRasCurve.setData(self.rasReadings[-self.plotSize:])
+
 
         self.rangeStart = self.rangeStart + 1
         self.rangeEnd = self.rangeEnd + 1
@@ -383,6 +408,7 @@ class GraphWidget(QtGui.QWidget):
 
         self.rasPlot.getAxis('bottom').setTicks([tickList])
         self.normalPlot.getAxis('bottom').setTicks([tickList])
+        self.bothPlot.getAxis('bottom').setTicks([tickList])
 
         #self.rasPlot.setXRange(self.rangeStart, self.rangeEnd)
 
@@ -396,14 +422,14 @@ class GraphWidget(QtGui.QWidget):
             if self.rasReadings[-1] < EMERGENCY_LIMIT:
                 self.systemStateLayout.ga1_update("Frequency Issue\nDetected")
                 self.systemStateLayout.setRed()
-                self.delay_count = 250
+                self.delay_count = 50
                 self.state = DETECTED_STATE
 
         if self.state == DETECTED_STATE:
             self.delay_count -= 1
             if self.delay_count == 0:
                 self.state = GA_CUT_STATE
-                self.delay_count = 150
+                self.delay_count = 160
 
                 self.systemStateLayout.ga1_update("Active Power deficiency \nestimated - 19.37 MW")
                 self.systemStateLayout.sa1_update("Informed of Issue")
@@ -493,12 +519,13 @@ class LineDiagram(QtGui.QWidget):
         self.linePixmap = QtGui.QPixmap(LINE_DIAGRAM)
         self.lineLabel.setPixmap(self.linePixmap.scaledToHeight(600))
 
-        self.graphLabel = QtGui.QLabel(self)
-        self.graphPixmap = QtGui.QPixmap(GRAPH_IMAGE)
-        self.graphLabel.setPixmap(self.graphPixmap.scaledToHeight(300))
+#        self.graphLabel = QtGui.QLabel(self)
+#        self.graphPixmap = QtGui.QPixmap(GRAPH_IMAGE)
+#        self.graphLabel.setPixmap(self.graphPixmap.scaledToHeight(300))
 
+        self.layout.addWidget(self.parent().demoWindow.graph.w1)
         self.layout.addWidget(self.lineLabel)
-        self.layout.addWidget(self.graphLabel)
+#        self.layout.addWidget(self.graphLabel)
 
 
 class DemoWindow(QtGui.QWidget):
