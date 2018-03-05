@@ -51,6 +51,9 @@ GA_CUT_STATE = 2
 SA_CUT_STATE = 3
 STABLE_STATE = 4
 
+
+NORMAL_START = 750
+
 def parse_files():
 
         normalFile = open(NORMAL_FILE, 'r') 
@@ -80,9 +83,9 @@ def parse_files():
         rasFile.close()
 
 
-        return normalReadings[750:], rasReadings[-7700:]
+        return normalReadings[NORMAL_START:], rasReadings[-7700:]
 
-def sockThread(normalReadings, port=7571):
+def sockThread(normalReadings, e, port=7571):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
 
@@ -93,10 +96,11 @@ def sockThread(normalReadings, port=7571):
 
     print("CONNECTION ON PORT " + str(port))
 
-
     with open(NORMAL_FILE, 'r') as f:
 
-        for i in range(len(normalReadings)):
+        normalReadings = f.readlines()
+
+        for i in range(NORMAL_START, len(normalReadings)):
             recv_str = sock.recv(64)
             if 'lider' in recv_str:
                 print recv_str
@@ -112,7 +116,9 @@ def sockThread(normalReadings, port=7571):
                 print recv_str
                 recv_str = sock.recv(64)
 
-            sock.send(f.readline().replace(',', ''))
+            if not e.isSet():
+                i = NORMAL_START + 50
+            sock.send(normalReadings[i].replace(',', ''))
 
     sock.close()            
 
@@ -123,17 +129,20 @@ class DataGenerator():
         self.index = 0
         self.isContingency = False
 
-        thread1 = threading.Thread(target=sockThread, args=(self.normalReadings, 7571))
-        thread2 = threading.Thread(target=sockThread, args=(self.normalReadings, 7572))
-        thread3 = threading.Thread(target=sockThread, args=(self.normalReadings, 7573))
+        self.contingencyEvent = threading.Event()
 
-        thread1.start()
-        thread2.start()
-        thread3.start()
+        thread1 = threading.Thread(target=sockThread, args=(self.normalReadings, self.contingencyEvent, 7571))
+        thread2 = threading.Thread(target=sockThread, args=(self.normalReadings, self.contingencyEvent, 7572))
+        thread3 = threading.Thread(target=sockThread, args=(self.normalReadings, self.contingencyEvent, 7573))
+
+        #thread1.start()
+        #thread2.start()
+        #thread3.start()
 
 
     def start(self):
         self.isContingency = True
+        self.contingencyEvent.set()
 
     def stop(self):
         self.isContingency = False
@@ -166,8 +175,10 @@ class SpeedButton(QtGui.QWidget):
         self.verticalLayout = QtGui.QVBoxLayout(self)
         self.speed = 0.25
         self.label = QtGui.QLabel(self)
-        self.label.setText("Speed")
+        self.label.setText("Speed Control")
         self.label.setFixedHeight(25)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+
 
         self.startButton = QtGui.QPushButton('Apply Contingency', self)
         self.startButton.clicked.connect(dataGenerator.start)
@@ -193,20 +204,23 @@ class SpeedButton(QtGui.QWidget):
         #self.speedLayout.addWidget(self.label)
         #self.speedLayout.addWidget(self.sb1)
         
-        print self.label.frameGeometry().width()
 
         self.verticalLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.checkboxLayout = QtGui.QHBoxLayout()
+            
 
         self.verticalLayout.addWidget(self.startButton)
         self.verticalLayout.addWidget(self.stopButton)
         self.verticalLayout.addWidget(self.fullPlotButton)
         self.verticalLayout.addWidget(self.zoomButton)
         self.verticalLayout.addWidget(self.label)
-        self.verticalLayout.addWidget(self.sb1)
-        self.verticalLayout.addWidget(self.sb2)
-        self.verticalLayout.addWidget(self.sb3)
-        self.verticalLayout.addWidget(self.sb4)
-        #self.verticalLayout.addLayout(self.speedLayout)
+
+        self.checkboxLayout.addWidget(self.sb1)
+        self.checkboxLayout.addWidget(self.sb2)
+        self.checkboxLayout.addWidget(self.sb3)
+        self.checkboxLayout.addWidget(self.sb4)
+        
+        self.verticalLayout.addLayout(self.checkboxLayout)
 
 
     def setSpeed(self, speed):
@@ -524,6 +538,8 @@ class GraphWidget(QtGui.QWidget):
         self.systemStateLayout.ga1_update("Normal Operation")
         self.systemStateLayout.sa1_update("Normal Operation")
         self.systemStateLayout.sa2_update("Normal Operation")
+        self.systemStateLayout.setGreen()
+
 
     def toggleZoom(self):
         self.isZoomed = not self.isZoomed
@@ -562,7 +578,7 @@ class LineDiagram(QtGui.QWidget):
 
         self.lineLabel = QtGui.QLabel(self)
         self.linePixmap = QtGui.QPixmap(LINE_DIAGRAM)
-        self.lineLabel.setPixmap(self.linePixmap.scaledToHeight(600))
+        self.lineLabel.setPixmap(self.linePixmap.scaledToHeight(700))
 
 #        self.graphLabel = QtGui.QLabel(self)
 #        self.graphPixmap = QtGui.QPixmap(GRAPH_IMAGE)
