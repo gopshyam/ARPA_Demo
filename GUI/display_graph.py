@@ -249,12 +249,17 @@ class SpeedButton(QtGui.QWidget):
 
         self.verticalLayout.setAlignment(QtCore.Qt.AlignTop)
         self.checkboxLayout = QtGui.QHBoxLayout()
-            
 
-        self.verticalLayout.addWidget(self.startButton)
-        self.verticalLayout.addWidget(self.stopButton)
-        self.verticalLayout.addWidget(self.fullPlotButton)
-        self.verticalLayout.addWidget(self.zoomButton)
+        self.hl1 = QtGui.QHBoxLayout()
+        self.hl2 = QtGui.QHBoxLayout() 
+
+        self.hl1.addWidget(self.startButton)
+        self.hl1.addWidget(self.stopButton)
+        self.hl2.addWidget(self.fullPlotButton)
+        self.hl2.addWidget(self.zoomButton)
+
+        self.verticalLayout.addLayout(self.hl1)
+        self.verticalLayout.addLayout(self.hl2)
         self.verticalLayout.addWidget(self.label)
 
         self.checkboxLayout.addWidget(self.sb1)
@@ -620,7 +625,7 @@ class LineDiagram(QtGui.QWidget):
 
         self.lineLabel = QtGui.QLabel(self)
         self.linePixmap = QtGui.QPixmap(LINE_DIAGRAM)
-        self.lineLabel.setPixmap(self.linePixmap.scaledToHeight(700))
+        self.lineLabel.setPixmap(self.linePixmap.scaledToHeight(800))
 
 #        self.graphLabel = QtGui.QLabel(self)
 #        self.graphPixmap = QtGui.QPixmap(GRAPH_IMAGE)
