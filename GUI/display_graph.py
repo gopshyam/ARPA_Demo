@@ -53,6 +53,8 @@ STABLE_STATE = 4
 
 
 NORMAL_START = 750
+RAS_START = 8530
+
 
 def parse_files():
 
@@ -83,7 +85,7 @@ def parse_files():
         rasFile.close()
 
 
-        return normalReadings[NORMAL_START:], rasReadings[-7700:]
+        return normalReadings[NORMAL_START:], rasReadings[RAS_START:]
 
 def sockThread(normalReadings, e, port=7571):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -131,9 +133,9 @@ class DataGenerator():
 
         self.contingencyEvent = threading.Event()
 
-        thread1 = threading.Thread(target=sockThread, args=(self.normalReadings, self.contingencyEvent, 7571))
-        thread2 = threading.Thread(target=sockThread, args=(self.normalReadings, self.contingencyEvent, 7572))
-        thread3 = threading.Thread(target=sockThread, args=(self.normalReadings, self.contingencyEvent, 7573))
+        thread1 = threading.Thread(target=self.sockThread, args=(self.normalReadings, self.contingencyEvent, 7571))
+        thread2 = threading.Thread(target=self.sockThread, args=(self.normalReadings, self.contingencyEvent, 7572))
+        thread3 = threading.Thread(target=self.sockThread, args=(self.normalReadings, self.contingencyEvent, 7573))
 
         #thread1.start()
         #thread2.start()
@@ -162,6 +164,46 @@ class DataGenerator():
                 self.index = 0
 
         return normalReading, rasReading
+
+    def sockThread(self, normalReadings, e, port=7571):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+
+        s.bind(("192.168.1.155", port))
+
+        s.listen(1)
+        sock, addr = s.accept()
+
+        print("CONNECTION ON PORT " + str(port))
+
+        with open(RAS_FILE, 'r') as f:
+
+            normalReadings = f.readlines()
+            i = RAS_START
+
+            while True:
+                recv_str = sock.recv(64)
+                if 'SetSlider' in recv_str:
+                    print recv_str
+                    recv_str = sock.recv(64)
+
+                recv_str = sock.recv(64)
+                if 'SetSlider' in recv_str:
+                    print recv_str
+                    recv_str = sock.recv(64)
+
+                recv_str = sock.recv(64)
+                if 'SetSlider' in recv_str:
+                    print recv_str
+                    recv_str = sock.recv(64)
+
+                if not e.isSet():
+                    i = RAS_START
+                else:
+                    i = RAS_START + self.index
+                sock.send(normalReadings[i].replace(',', ''))
+
+        sock.close()            
 
 
 
@@ -393,13 +435,13 @@ class GraphWidget(QtGui.QWidget):
 
         self.tickList = [(x, x) for x in range(0, 500, 200)]
 
-        self.normalPlot = self.win.addPlot(title = "Without RAS")
+        self.normalPlot = self.win.addPlot(title = "<h2>Without RAS</h2>")
         self.normalCurve = self.normalPlot.plot(pen = pg.mkPen('r', width = 3))
         self.normalPlot.setYRange(49, 60, padding = 0.1, update = False)
         self.normalPlot.setLabel("left", "Frequency", units = "Hz")
         self.normalPlot.setLabel("bottom", "Time (ms) ")
 
-        self.rasPlot = self.win.addPlot(title = "With RAS")
+        self.rasPlot = self.win.addPlot(title = "<h2>With RAS</h2>")
 
         self.rasPlot.getAxis('bottom').setTicks([self.tickList])
 
@@ -408,7 +450,7 @@ class GraphWidget(QtGui.QWidget):
         self.rasPlot.setLabel("left", "Frequency", units = "Hz")
         self.rasPlot.setLabel("bottom", "Time (ms)")
 
-        self.bothPlot = self.win2.addPlot(title = "Comparison")
+        self.bothPlot = self.win2.addPlot(title = "<h2>Comparison</h2>")
         self.bothPlot.setYRange(49, 60, padding = 0.1, update = False)
         self.bothPlot.setLabel("left", "Frequency", units = "Hz")
         self.bothPlot.setLabel("bottom", "Time (ms)")
