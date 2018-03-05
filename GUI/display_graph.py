@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import sched, time
 import threading
+import socket
 
 
 NORMAL_FILE = "../Data/cs01_no_ls.csv"
@@ -81,6 +82,39 @@ def parse_files():
 
         return normalReadings[750:], rasReadings[-7700:]
 
+def sockThread(normalReadings, port=7571):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+
+    s.bind(("192.168.1.155", port))
+
+    s.listen(1)
+    sock, addr = s.accept()
+
+    print("CONNECTION ON PORT " + str(port))
+
+
+    with open(NORMAL_FILE, 'r') as f:
+
+        for i in range(len(normalReadings)):
+            recv_str = sock.recv(64)
+            if 'lider' in recv_str:
+                print recv_str
+                recv_str = sock.recv(64)
+
+            recv_str = sock.recv(64)
+            if 'lider' in recv_str:
+                print recv_str
+                recv_str = sock.recv(64)
+
+            recv_str = sock.recv(64)
+            if 'lider' in recv_str:
+                print recv_str
+                recv_str = sock.recv(64)
+
+            sock.send(f.readline().replace(',', ''))
+
+    sock.close()            
 
 
 class DataGenerator():
@@ -88,6 +122,15 @@ class DataGenerator():
         self.normalReadings, self.rasReadings = parse_files()
         self.index = 0
         self.isContingency = False
+
+        thread1 = threading.Thread(target=sockThread, args=(self.normalReadings, 7571))
+        thread2 = threading.Thread(target=sockThread, args=(self.normalReadings, 7572))
+        thread3 = threading.Thread(target=sockThread, args=(self.normalReadings, 7573))
+
+        thread1.start()
+        thread2.start()
+        thread3.start()
+
 
     def start(self):
         self.isContingency = True
@@ -110,6 +153,8 @@ class DataGenerator():
                 self.index = 0
 
         return normalReading, rasReading
+
+
 
 
 
