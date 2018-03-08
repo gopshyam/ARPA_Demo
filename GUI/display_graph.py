@@ -18,7 +18,7 @@ ALERT_IMAGE = "../Data/alert_state.png"
 WSU_LOGO = "Arpa_demo_nodes/WSU_Logo.png"
 GRAPH_IMAGE = "Arpa_demo_nodes/UFLS_Graph.png"
 
-GA1_IMAGE = "Arpa_demo_nodes/Node1.PNG"
+GA1_IMAGE = "Arpa_demo_nodes/Node1.png"
 SA1_IMAGE = "Arpa_demo_nodes/Node2.PNG"
 SA2_IMAGE = "Arpa_demo_nodes/Node3.PNG"
 
@@ -32,7 +32,7 @@ SA2_NORMAL = "Arpa_demo_nodes/Slide7.PNG"
 SA2_ALERT = "Arpa_demo_nodes/Slide8.PNG"
 SA2_STABLE = "Arpa_demo_nodes/Slide9.PNG"
 
-LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing.png"
+LINE_DIAGRAM = "Arpa_demo_nodes/14-bus-jing-hi.png"
 
 PLOT_SIZE = 5000
 TIMEOUT = 5
@@ -294,7 +294,7 @@ class BBInfo(QtGui.QWidget):
         self.label3.setStyleSheet("QLabel { color : green; font-size:20px}") 
         self.label3.setText(self.label3text)
 
-        self.label1.setFixedWidth(250)
+        self.label1.setFixedWidth(200)
 
         self.layout.addWidget(self.label1)
         self.layout.addWidget(self.label2)
@@ -450,7 +450,7 @@ class GraphWidget(QtGui.QWidget):
 
         self.rasPlot.getAxis('bottom').setTicks([self.tickList])
 
-        self.rasCurve = self.rasPlot.plot(pen = pg.mkPen('b', width = 3))
+        self.rasCurve = self.rasPlot.plot(pen = pg.mkPen('g', width = 3))
         self.rasPlot.setYRange(58.1, 60, padding = 0.1, update = False)
         self.rasPlot.setLabel("left", "Frequency", units = "Hz")
         self.rasPlot.setLabel("bottom", "Time (ms)")
@@ -465,7 +465,7 @@ class GraphWidget(QtGui.QWidget):
         self.bothNormalCurve = pg.PlotCurveItem()
         self.bothNormalCurve.setPen(pg.mkPen('r', width = 3))
         self.bothRasCurve = pg.PlotCurveItem()
-        self.bothRasCurve.setPen(pg.mkPen('b', width = 3))
+        self.bothRasCurve.setPen(pg.mkPen('g', width = 3))
         
 
         self.bothPlot.addItem(self.bothNormalCurve)
@@ -625,7 +625,7 @@ class LineDiagram(QtGui.QWidget):
 
         self.lineLabel = QtGui.QLabel(self)
         self.linePixmap = QtGui.QPixmap(LINE_DIAGRAM)
-        self.lineLabel.setPixmap(self.linePixmap.scaledToHeight(800))
+        self.lineLabel.setPixmap(self.linePixmap.scaledToHeight(750))
 
 #        self.graphLabel = QtGui.QLabel(self)
 #        self.graphPixmap = QtGui.QPixmap(GRAPH_IMAGE)
