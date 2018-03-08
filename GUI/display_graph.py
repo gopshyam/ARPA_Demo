@@ -291,7 +291,7 @@ class BBInfo(QtGui.QWidget):
 #        self.label2.setText("Issue detected")
 
         self.label3 = QtGui.QLabel(self)
-        self.label3.setStyleSheet("QLabel { color : green; font-size:20px}") 
+        self.label3.setStyleSheet("QLabel { color : green; font-size:30px}") 
         self.label3.setText(self.label3text)
 
         self.label1.setFixedWidth(200)
@@ -310,10 +310,10 @@ class BBInfo(QtGui.QWidget):
         self.label3.setText(self.label3text)
 
     def setRed(self):
-        self.label3.setStyleSheet("QLabel { color : red; font-size:20px}")
+        self.label3.setStyleSheet("QLabel { color : red; font-size:30px}")
 
     def setGreen(self):
-        self.label3.setStyleSheet("QLabel { color : green; font-size:20px}")
+        self.label3.setStyleSheet("QLabel { color : green; font-size:30px}")
 
    
 class SystemState(QtGui.QWidget):
@@ -460,6 +460,16 @@ class GraphWidget(QtGui.QWidget):
         self.bothPlot.setLabel("left", "Frequency", units = "Hz")
         self.bothPlot.setLabel("bottom", "Time (ms)")
         self.bothPlot.getAxis('bottom').setTicks([self.tickList])
+        
+
+        self.bothPlot.getAxis('bottom').setGrid(120)
+        self.bothPlot.getAxis('left').setGrid(200)
+
+        self.normalPlot.getAxis('bottom').setGrid(120)
+        self.normalPlot.getAxis('left').setGrid(200)
+
+        self.rasPlot.getAxis('bottom').setGrid(120)
+        self.rasPlot.getAxis('left').setGrid(200)
 
         
         self.bothNormalCurve = pg.PlotCurveItem()
@@ -546,9 +556,9 @@ class GraphWidget(QtGui.QWidget):
             if self.delay_count == 0:
                 self.delay_count = 250
                 self.state = SA_CUT_STATE
-                self.systemStateLayout.ga1_update("GA1 cuts 6.456 MW\n(32.27%)")
-                self.systemStateLayout.sa1_update("SA1 cuts 6.456 MW\n(24.83%)")
-                self.systemStateLayout.sa2_update("SA2 cuts 5.465 MW\n(24.83%)")
+                self.systemStateLayout.ga1_update("GA1 cuts 6.456 MW,\n3.874 MVAR (32.27%)")
+                self.systemStateLayout.sa1_update("SA1 cuts 6.456 MW,\n2.483 MVAR (24.83%)")
+                self.systemStateLayout.sa2_update("SA2 cuts 6.456 MW,\n3.228 MVAR (32.27%)")
 
         if self.state == SA_CUT_STATE:
             self.delay_count -= 1
