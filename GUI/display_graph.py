@@ -18,7 +18,7 @@ ALERT_IMAGE = "../Data/alert_state.png"
 WSU_LOGO = "Arpa_demo_nodes/WSU_Logo.png"
 GRAPH_IMAGE = "Arpa_demo_nodes/UFLS_Graph.png"
 
-GA1_IMAGE = "Arpa_demo_nodes/Node1.png"
+GA1_IMAGE = "Arpa_demo_nodes/Node1.PNG"
 SA1_IMAGE = "Arpa_demo_nodes/Node2.PNG"
 SA2_IMAGE = "Arpa_demo_nodes/Node3.PNG"
 
